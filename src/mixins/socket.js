@@ -38,6 +38,7 @@ export default {
                 initedSocketIO: false,
             },
             username: null,
+            userRole: null, // User role: 'admin' or 'viewer'
             remember: localStorage.remember !== "0",
             allowLoginDialog: false, // Allowed to show login dialog, but "loggedIn" have to be true too. This exists because prevent the login dialog show 0.1s in first before the socket server auth-ed.
             loggedIn: false,
@@ -348,6 +349,44 @@ export default {
         },
 
         /**
+         * Check if user is an admin
+         * @returns {boolean} True if user is admin
+         */
+        isAdmin() {
+            return this.userRole === "admin";
+        },
+
+        /**
+         * Check if user has a specific permission
+         * Based on role-based permissions system
+         * @param {string} permission Permission to check (e.g., 'monitor:write')
+         * @returns {boolean} True if user has the permission
+         */
+        hasPermission(permission) {
+            // Admin has all permissions
+            if (this.userRole === "admin") {
+                return true;
+            }
+
+            // Viewer permissions
+            const viewerPermissions = [
+                "monitor:read",
+                "heartbeat:read",
+                "notification:read",
+                "status-page:read",
+                "maintenance:read",
+                "proxy:read",
+                "docker-host:read",
+                "remote-browser:read",
+                "api-key:read",
+                "tag:read",
+                "cert-info:read",
+            ];
+
+            return viewerPermissions.includes(permission);
+        },
+
+        /**
          * Apply translation to a message if possible
          * @param {string | {key: string, values: object}} msg Message to translate
          * @returns {string} Translated message
@@ -426,7 +465,9 @@ export default {
                         this.storage().token = res.token;
                         this.socket.token = res.token;
                         this.loggedIn = true;
-                        this.username = this.getJWTPayload()?.username;
+                        const payload = this.getJWTPayload();
+                        this.username = payload?.username;
+                        this.userRole = payload?.role || "admin";
 
                         // Trigger Chrome Save Password
                         history.pushState({}, "");
@@ -450,7 +491,9 @@ export default {
                     this.logout();
                 } else {
                     this.loggedIn = true;
-                    this.username = this.getJWTPayload()?.username;
+                    const payload = this.getJWTPayload();
+                    this.username = payload?.username;
+                    this.userRole = payload?.role || "admin";
                 }
             });
         },
@@ -465,6 +508,7 @@ export default {
             this.socket.token = null;
             this.loggedIn = false;
             this.username = null;
+            this.userRole = null;
             this.clearData();
         },
 

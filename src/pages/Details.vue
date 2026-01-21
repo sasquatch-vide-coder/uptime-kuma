@@ -87,12 +87,12 @@
 
             <div class="functions">
                 <div class="btn-group" role="group">
-                    <button v-if="monitor.active" class="btn btn-normal" @click="pauseDialog">
+                    <button v-if="monitor.active && $root.hasPermission('monitor:write')" class="btn btn-normal" @click="pauseDialog">
                         <font-awesome-icon icon="pause" />
                         {{ $t("Pause") }}
                     </button>
                     <button
-                        v-if="!monitor.active"
+                        v-if="!monitor.active && $root.hasPermission('monitor:write')"
                         class="btn btn-primary"
                         :disabled="monitor.forceInactive"
                         @click="resumeMonitor"
@@ -100,15 +100,15 @@
                         <font-awesome-icon icon="play" />
                         {{ $t("Resume") }}
                     </button>
-                    <router-link :to="'/edit/' + monitor.id" class="btn btn-normal">
+                    <router-link v-if="$root.hasPermission('monitor:write')" :to="'/edit/' + monitor.id" class="btn btn-normal">
                         <font-awesome-icon icon="edit" />
                         {{ $t("Edit") }}
                     </router-link>
-                    <router-link :to="'/clone/' + monitor.id" class="btn btn-normal">
+                    <router-link v-if="$root.hasPermission('monitor:write')" :to="'/clone/' + monitor.id" class="btn btn-normal">
                         <font-awesome-icon icon="clone" />
                         {{ $t("Clone") }}
                     </router-link>
-                    <button class="btn btn-normal text-danger" @click="deleteDialog">
+                    <button v-if="$root.hasPermission('monitor:delete')" class="btn btn-normal text-danger" @click="deleteDialog">
                         <font-awesome-icon icon="trash" />
                         {{ $t("Delete") }}
                     </button>

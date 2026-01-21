@@ -1,7 +1,20 @@
 <template>
     <div class="form-container">
         <div class="form">
-            <form @submit.prevent="submit">
+            <!-- OIDC Error Display -->
+            <div v-if="oidcError" class="alert alert-danger mb-3" role="alert">
+                {{ oidcError }}
+            </div>
+
+            <!-- OIDC Login Processing -->
+            <div v-if="oidcProcessing" class="text-center mb-3">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">{{ $t("Loading...") }}</span>
+                </div>
+                <p class="mt-2">{{ $t("Completing SSO login...") }}</p>
+            </div>
+
+            <form v-if="!oidcProcessing" @submit.prevent="submit">
                 <h1 class="h3 mb-3 fw-normal" />
 
                 <div v-if="!tokenRequired" class="form-floating">
@@ -66,6 +79,24 @@
                     {{ $t("Login") }}
                 </button>
 
+                <!-- SSO Login Button -->
+                <div v-if="oidcEnabled" class="mt-3">
+                    <div class="divider-text mb-3">
+                        <span>{{ $t("or") }}</span>
+                    </div>
+                    <button
+                        type="button"
+                        class="w-100 btn btn-outline-primary"
+                        :disabled="processing"
+                        @click="loginWithEntra"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-microsoft me-2" viewBox="0 0 16 16">
+                            <path d="M7.462 0H0v7.19h7.462V0zM16 0H8.538v7.19H16V0zM7.462 8.211H0V16h7.462V8.211zm8.538 0H8.538V16H16V8.211z"/>
+                        </svg>
+                        {{ $t("Login with Microsoft") }}
+                    </button>
+                </div>
+
                 <div v-if="res && !res.ok" class="alert alert-danger mt-3" role="alert">
                     {{ $t(res.msg) }}
                 </div>
@@ -84,6 +115,9 @@ export default {
             token: "",
             res: null,
             tokenRequired: false,
+            oidcEnabled: false,
+            oidcError: null,
+            oidcProcessing: false,
         };
     },
 
@@ -99,6 +133,8 @@ export default {
 
     mounted() {
         document.title += " - Login";
+        this.checkOidcConfig();
+        this.handleOidcCallback();
     },
 
     unmounted() {
@@ -106,6 +142,80 @@ export default {
     },
 
     methods: {
+        /**
+         * Check if OIDC is enabled
+         * @returns {void}
+         */
+        async checkOidcConfig() {
+            try {
+                const response = await fetch("/auth/oidc/entra/config");
+                const data = await response.json();
+                this.oidcEnabled = data.enabled;
+            } catch (e) {
+                console.error("Failed to check OIDC config:", e);
+            }
+        },
+
+        /**
+         * Handle OIDC callback parameters from URL
+         * @returns {void}
+         */
+        handleOidcCallback() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const oidcCode = urlParams.get("oidc_code");
+            const oidcError = urlParams.get("oidc_error");
+
+            // Clean up URL parameters
+            if (oidcCode || oidcError) {
+                const newUrl = window.location.pathname;
+                window.history.replaceState({}, "", newUrl);
+            }
+
+            if (oidcError) {
+                this.oidcError = decodeURIComponent(oidcError);
+                return;
+            }
+
+            if (oidcCode) {
+                this.exchangeOidcCode(oidcCode);
+            }
+        },
+
+        /**
+         * Exchange OIDC login code for JWT
+         * @param {string} code One-time login code from OIDC callback
+         * @returns {void}
+         */
+        exchangeOidcCode(code) {
+            this.oidcProcessing = true;
+            this.oidcError = null;
+
+            this.$root.getSocket().emit("loginByOidcCode", code, (res) => {
+                this.oidcProcessing = false;
+
+                if (res.ok) {
+                    this.$root.storage().token = res.token;
+                    this.$root.socket.token = res.token;
+                    this.$root.loggedIn = true;
+                    this.$root.username = this.$root.getJWTPayload()?.username;
+                    this.$root.userRole = res.role;
+
+                    // Trigger navigation
+                    history.pushState({}, "");
+                } else {
+                    this.oidcError = res.msg;
+                }
+            });
+        },
+
+        /**
+         * Redirect to Microsoft Entra ID login
+         * @returns {void}
+         */
+        loginWithEntra() {
+            window.location.href = "/auth/oidc/entra/login";
+        },
+
         /**
          * Submit the user details and attempt to log in
          * @returns {void}
@@ -151,5 +261,24 @@ export default {
     padding: 15px;
     margin: auto;
     text-align: center;
+}
+
+.divider-text {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    color: #6c757d;
+
+    &::before,
+    &::after {
+        content: "";
+        flex: 1;
+        border-bottom: 1px solid #dee2e6;
+    }
+
+    span {
+        padding: 0 10px;
+        font-size: 0.875rem;
+    }
 }
 </style>

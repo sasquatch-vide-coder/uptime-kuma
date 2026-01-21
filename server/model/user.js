@@ -39,10 +39,13 @@ class User extends BeanModel {
      * @returns {string} the JsonWebToken as a string
      */
     static createJWT(user, jwtSecret) {
+        // For OIDC users (no password), use entra_oid for hash
+        const hashSource = user.password || user.entra_oid || user.username;
         return jwt.sign(
             {
                 username: user.username,
-                h: shake256(user.password, SHAKE256_LENGTH),
+                role: user.role || "admin", // Include role in JWT, default to admin for backward compatibility
+                h: shake256(hashSource, SHAKE256_LENGTH),
             },
             jwtSecret
         );

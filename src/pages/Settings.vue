@@ -84,44 +84,64 @@ export default {
         },
 
         subMenus() {
-            return {
-                general: {
-                    title: this.$t("General"),
-                },
-                appearance: {
-                    title: this.$t("Appearance"),
-                },
-                notifications: {
-                    title: this.$t("Notifications"),
-                },
-                "reverse-proxy": {
-                    title: this.$t("Reverse Proxy"),
-                },
-                tags: {
-                    title: this.$t("Tags"),
-                },
-                "monitor-history": {
-                    title: this.$t("Monitor History"),
-                },
-                "docker-hosts": {
-                    title: this.$t("Docker Hosts"),
-                },
-                "remote-browsers": {
-                    title: this.$t("Remote Browsers"),
-                },
-                security: {
-                    title: this.$t("Security"),
-                },
-                "api-keys": {
-                    title: this.$t("API Keys"),
-                },
-                proxies: {
-                    title: this.$t("Proxies"),
-                },
-                about: {
-                    title: this.$t("About"),
-                },
-            };
+            const menus = {};
+            const isAdmin = this.$root.isAdmin();
+
+            // General settings - admin only
+            if (isAdmin) {
+                menus.general = { title: this.$t("General") };
+            }
+
+            // Appearance - available to all users
+            menus.appearance = { title: this.$t("Appearance") };
+
+            // Notifications - admin only
+            if (isAdmin) {
+                menus.notifications = { title: this.$t("Notifications") };
+            }
+
+            // Reverse proxy - admin only (documentation)
+            if (isAdmin) {
+                menus["reverse-proxy"] = { title: this.$t("Reverse Proxy") };
+            }
+
+            // Tags - admin only
+            if (isAdmin) {
+                menus.tags = { title: this.$t("Tags") };
+            }
+
+            // Monitor history - admin only
+            if (isAdmin) {
+                menus["monitor-history"] = { title: this.$t("Monitor History") };
+            }
+
+            // Docker hosts - admin only
+            if (isAdmin) {
+                menus["docker-hosts"] = { title: this.$t("Docker Hosts") };
+            }
+
+            // Remote browsers - admin only
+            if (isAdmin) {
+                menus["remote-browsers"] = { title: this.$t("Remote Browsers") };
+            }
+
+            // Security - available to all (password change), with admin sections inside
+            menus.security = { title: this.$t("Security") };
+
+            // API keys - admin only
+            if (isAdmin) {
+                menus["api-keys"] = { title: this.$t("API Keys") };
+            }
+
+            // Proxies - admin only
+            if (isAdmin) {
+                menus.proxies = { title: this.$t("Proxies") };
+            }
+
+            // About - available to all
+            menus.about = { title: this.$t("About") };
+
+            return menus;
         },
     },
 
@@ -138,13 +158,18 @@ export default {
 
     methods: {
         /**
-         * Load the general settings page
+         * Load the default settings page
          * For desktop only, on mobile do nothing
+         * Redirects to appearance for viewers, general for admins
          * @returns {void}
          */
         loadGeneralPage() {
             if (!this.currentPage && !this.$root.isMobile) {
-                this.$router.push("/settings/general");
+                if (this.$root.isAdmin()) {
+                    this.$router.push("/settings/general");
+                } else {
+                    this.$router.push("/settings/appearance");
+                }
             }
         },
 

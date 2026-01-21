@@ -81,6 +81,16 @@
                 </div>
             </div>
 
+            <!-- OIDC / SSO Settings (Admin Only) -->
+            <div v-if="$root.isAdmin()" class="my-4">
+                <OidcSettings />
+            </div>
+
+            <!-- User Management (Admin Only) -->
+            <div v-if="$root.isAdmin()" class="my-4">
+                <UserManagement />
+            </div>
+
             <div class="my-4">
                 <!-- Advanced -->
                 <h5 class="my-4 settings-subheading">{{ $t("Advanced") }}</h5>
@@ -95,7 +105,7 @@
                         {{ $t("Enable Auth") }}
                     </button>
                     <button
-                        v-if="!settings.disableAuth"
+                        v-if="!settings.disableAuth && $root.isAdmin()"
                         id="disableAuth-btn"
                         class="btn btn-primary me-2 mb-2"
                         @click="confirmDisableAuth"
@@ -146,11 +156,15 @@
 <script>
 import Confirm from "../../components/Confirm.vue";
 import TwoFADialog from "../../components/TwoFADialog.vue";
+import OidcSettings from "./OidcSettings.vue";
+import UserManagement from "./UserManagement.vue";
 
 export default {
     components: {
         Confirm,
         TwoFADialog,
+        OidcSettings,
+        UserManagement,
     },
 
     data() {

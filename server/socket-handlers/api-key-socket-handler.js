@@ -1,4 +1,5 @@
 const { checkLogin } = require("../util-server");
+const { checkPermission } = require("../permissions");
 const { log } = require("../../src/util");
 const { R } = require("redbean-node");
 const { nanoid } = require("nanoid");
@@ -18,6 +19,7 @@ module.exports.apiKeySocketHandler = (socket) => {
     socket.on("addAPIKey", async (key, callback) => {
         try {
             checkLogin(socket);
+            checkPermission(socket, "api-key:write");
 
             let clearKey = nanoid(40);
             let hashedKey = await passwordHash.generate(clearKey);
@@ -70,6 +72,7 @@ module.exports.apiKeySocketHandler = (socket) => {
     socket.on("deleteAPIKey", async (keyID, callback) => {
         try {
             checkLogin(socket);
+            checkPermission(socket, "api-key:delete");
 
             log.debug("apikeys", `Deleted API Key: ${keyID} User ID: ${socket.userID}`);
 
@@ -95,6 +98,7 @@ module.exports.apiKeySocketHandler = (socket) => {
     socket.on("disableAPIKey", async (keyID, callback) => {
         try {
             checkLogin(socket);
+            checkPermission(socket, "api-key:write");
 
             log.debug("apikeys", `Disabled Key: ${keyID} User ID: ${socket.userID}`);
 
@@ -120,6 +124,7 @@ module.exports.apiKeySocketHandler = (socket) => {
     socket.on("enableAPIKey", async (keyID, callback) => {
         try {
             checkLogin(socket);
+            checkPermission(socket, "api-key:write");
 
             log.debug("apikeys", `Enabled Key: ${keyID} User ID: ${socket.userID}`);
 

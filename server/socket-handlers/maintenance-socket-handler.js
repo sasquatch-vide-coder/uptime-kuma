@@ -1,4 +1,5 @@
 const { checkLogin } = require("../util-server");
+const { checkPermission } = require("../permissions");
 const { log } = require("../../src/util");
 const { R } = require("redbean-node");
 const apicache = require("../modules/apicache");
@@ -16,6 +17,7 @@ module.exports.maintenanceSocketHandler = (socket) => {
     socket.on("addMaintenance", async (maintenance, callback) => {
         try {
             checkLogin(socket);
+            checkPermission(socket, "maintenance:write");
 
             log.debug("maintenance", maintenance);
 
@@ -46,6 +48,7 @@ module.exports.maintenanceSocketHandler = (socket) => {
     socket.on("editMaintenance", async (maintenance, callback) => {
         try {
             checkLogin(socket);
+            checkPermission(socket, "maintenance:write");
 
             let bean = server.getMaintenance(maintenance.id);
 
@@ -77,6 +80,7 @@ module.exports.maintenanceSocketHandler = (socket) => {
     socket.on("addMonitorMaintenance", async (maintenanceID, monitors, callback) => {
         try {
             checkLogin(socket);
+            checkPermission(socket, "maintenance:write");
 
             await R.exec("DELETE FROM monitor_maintenance WHERE maintenance_id = ?", [maintenanceID]);
 
@@ -109,6 +113,7 @@ module.exports.maintenanceSocketHandler = (socket) => {
     socket.on("addMaintenanceStatusPage", async (maintenanceID, statusPages, callback) => {
         try {
             checkLogin(socket);
+            checkPermission(socket, "maintenance:write");
 
             await R.exec("DELETE FROM maintenance_status_page WHERE maintenance_id = ?", [maintenanceID]);
 
@@ -224,6 +229,7 @@ module.exports.maintenanceSocketHandler = (socket) => {
     socket.on("deleteMaintenance", async (maintenanceID, callback) => {
         try {
             checkLogin(socket);
+            checkPermission(socket, "maintenance:delete");
 
             log.debug("maintenance", `Delete Maintenance: ${maintenanceID} User ID: ${socket.userID}`);
 
@@ -254,6 +260,7 @@ module.exports.maintenanceSocketHandler = (socket) => {
     socket.on("pauseMaintenance", async (maintenanceID, callback) => {
         try {
             checkLogin(socket);
+            checkPermission(socket, "maintenance:write");
 
             log.debug("maintenance", `Pause Maintenance: ${maintenanceID} User ID: ${socket.userID}`);
 
@@ -287,6 +294,7 @@ module.exports.maintenanceSocketHandler = (socket) => {
     socket.on("resumeMaintenance", async (maintenanceID, callback) => {
         try {
             checkLogin(socket);
+            checkPermission(socket, "maintenance:write");
 
             log.debug("maintenance", `Resume Maintenance: ${maintenanceID} User ID: ${socket.userID}`);
 
