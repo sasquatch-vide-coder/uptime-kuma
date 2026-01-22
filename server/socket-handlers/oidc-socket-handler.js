@@ -194,7 +194,7 @@ module.exports.oidcSocketHandler = (socket, server) => {
             checkLogin(socket);
             checkAdmin(socket);
 
-            const users = await R.findAll("user", " active = 1 ORDER BY id ASC");
+            const users = await R.findAll("user", " AND active = 1 ORDER BY id ASC");
 
             const userList = users.map(user => ({
                 id: user.id,
